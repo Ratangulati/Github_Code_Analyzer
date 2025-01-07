@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import FileTree from './FileTree';
-import { delay, analyzeFileContent } from '@/lib/analysisUtils';
+import { analyzeFileContent } from '@/lib/analysisUtils';
 
 interface CodeAnalysisProps {
   repoData: any;
