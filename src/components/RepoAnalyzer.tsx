@@ -5,6 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, Github, Code2, FileCode2 } from 'lucide-react';
 import RepoInfo from './RepoInfo';
 import CodeAnalysis from './CodeAnalysis';
+import { Navbar } from './Navbar';
 
 const GITHUB_TOKEN = import.meta.env.VITE_GITHUB_TOKEN;
 
@@ -97,7 +98,7 @@ const RepoAnalyzer = () => {
           style={{ opacity: 0.4 }}
         />
       </div>
-
+      <Navbar />
       {/* Content Container */}
       <div className="container mx-auto px-6 py-8 max-w-6xl rounded-lg z-10">
         <h1 className="max-w-4xl mx-auto text-5xl font-bold tracking-tight text-center flex flex-col gap-2">
