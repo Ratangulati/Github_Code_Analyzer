@@ -90,6 +90,8 @@ const CodeAnalysis: React.FC<CodeAnalysisProps> = ({ repoData }) => {
     }
   };
 
+  
+
   return (
     <Card className="p-6">
       <div className="space-y-4">

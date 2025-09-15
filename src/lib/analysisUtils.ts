@@ -5,44 +5,70 @@ export const analyzeFileContent = async (apiKey: string, path: string, content: 
     throw new Error('Please enter your Gemini API key first');
   }
 
-  // Limit content size to prevent large file issues
-  const truncatedContent = content.slice(0, 5000);
-  
-  try {
-    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-goog-api-key': apiKey,
-      },
-      body: JSON.stringify({
-        contents: [{
-          parts: [{
-            text: `Analyze this code file and explain its purpose and functionality. File path: ${path}\n\nCode:\n${truncatedContent}`
-          }]
-        }]
-      })
-    });
+  const preferredModel = (import.meta as any).env?.VITE_GEMINI_MODEL || 'gemini-1.5-flash';
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      
-      if (response.status === 429) {
-        throw new Error('Rate limit reached. Please wait 30 seconds before trying again.');
+  // Keep the prompt compact and lower token usage
+  const buildPrompt = (codeSnippet: string) =>
+    `You are a senior code analyst. Summarize purpose, key functions/modules, and any risks.
+File: ${path}
+Keep it concise and actionable.
+
+Code:
+${codeSnippet}`;
+
+  const requestOnce = async (model: string, codeLimit: number, timeoutMs: number): Promise<string> => {
+    const truncatedContent = content.slice(0, codeLimit);
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': apiKey,
+        },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{ text: buildPrompt(truncatedContent) }]
+          }],
+          generationConfig: {
+            temperature: 0.2,
+          }
+        }),
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        if (response.status === 429) {
+          throw new Error('Rate limit reached. Please wait 30 seconds before trying again.');
+        }
+        throw new Error(errorData.error?.message || `Request failed (${response.status})`);
       }
-      
-      throw new Error(errorData.error?.message || 'Failed to analyze code');
-    }
 
-    const data = await response.json();
-    return data.candidates[0].content.parts[0].text;
-  } catch (error: any) {
-    if (error.message.includes('Rate limit')) {
-      // Wait for 30 seconds before retrying on rate limit
-      await delay(30000);
-      return analyzeFileContent(apiKey, path, content);
+      const data = await response.json();
+      return data.candidates?.[0]?.content?.parts?.[0]?.text || 'No analysis generated.';
+    } finally {
+      clearTimeout(timeoutId);
     }
-    throw error;
+  };
+
+  try {
+    // First try: preferred model with moderate context and 20s timeout
+    return await requestOnce(preferredModel, 3000, 20000);
+  } catch (error: any) {
+    if (error?.message?.includes('Rate limit')) {
+      await delay(30000);
+      // Retry once after backoff
+      return requestOnce(preferredModel, 3000, 20000);
+    }
+    // Fallback: faster model + smaller context + shorter timeout
+    try {
+      return await requestOnce('gemini-1.5-flash', 1800, 12000);
+    } catch (_) {
+      throw error;
+    }
   }
 };
 

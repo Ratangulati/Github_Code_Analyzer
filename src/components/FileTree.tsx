@@ -115,7 +115,7 @@ const FileTree: React.FC<FileTreeProps> = ({ tree, analysisResults, onAnalyzeFil
             <div key={file.path}>
               <button
                 className={`flex items-center gap-2 p-1 rounded-md w-full text-left ${
-                  canAnalyze ? 'hover:bg-secondary cursor-pointer' : 'cursor-not-allowed opacity-50'
+                  canAnalyze ? 'hover:bg-secondary' : 'opacity-50'
                 }`}
                 onClick={() => canAnalyze && toggleFile(file.path, file.url)}
                 style={{ paddingLeft: `${level * 16 + 24}px` }}
