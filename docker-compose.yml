@@ -1,0 +1,13 @@
+version: "3.9"
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: github-code-analyzer-frontend
+    ports:
+      - "3000:80"   # maps host port 3000 to container port 80 (nginx)
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production

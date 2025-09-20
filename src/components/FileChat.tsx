@@ -89,3 +89,4 @@ const FileChat: React.FC<FileChatProps> = ({ filePath, fileContent, onAsk }) => 
 export default FileChat
 
 
+

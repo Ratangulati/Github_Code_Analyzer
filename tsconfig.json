@@ -4,6 +4,10 @@
     { "path": "./tsconfig.app.json" },
     { "path": "./tsconfig.node.json" }
   ],
+  "exclude": [
+    "node_modules",
+    "src/__tests__"
+  ],
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
