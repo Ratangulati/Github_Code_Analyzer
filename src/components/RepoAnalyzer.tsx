@@ -64,10 +64,12 @@ const RepoAnalyzer = () => {
       setLoading(true);
       const { owner, repo } = extractRepoInfo(repoUrl);
       
-      const [repoResponse, contentsResponse] = await Promise.all([
-        fetchWithAuth(`https://api.github.com/repos/${owner}/${repo}`),
-        fetchWithAuth(`https://api.github.com/repos/${owner}/${repo}/git/trees/main?recursive=1`)
-      ]);
+      // First get repository info to determine the default branch
+      const repoResponse = await fetchWithAuth(`https://api.github.com/repos/${owner}/${repo}`);
+      const defaultBranch = repoResponse.default_branch || 'main';
+      
+      // Then get the repository tree using the correct default branch
+      const contentsResponse = await fetchWithAuth(`https://api.github.com/repos/${owner}/${repo}/git/trees/${defaultBranch}?recursive=1`);
       
       setRepoData({ ...repoResponse, tree: contentsResponse.tree });
       toast({
@@ -161,8 +163,15 @@ const RepoAnalyzer = () => {
             </div>
             {!GITHUB_TOKEN && (
               <div className="mt-4 p-4 bg-yellow-100 dark:bg-yellow-900 rounded-lg text-sm">
-                ⚠️ No GitHub token detected. API requests may be rate
-                limited. Add your token to increase the limit.
+                ⚠️ No GitHub token detected. API requests may be rate limited. 
+                <br />
+                <strong>To fix this:</strong>
+                <br />
+                1. Create a <code>.env</code> file in the project root
+                <br />
+                2. Add: <code>VITE_GITHUB_TOKEN=your_token_here</code>
+                <br />
+                3. Get your token from: <a href="https://github.com/settings/tokens" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">GitHub Settings</a>
               </div>
             )}
           </div>
